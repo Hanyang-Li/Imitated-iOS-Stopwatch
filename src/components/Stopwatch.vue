@@ -339,7 +339,7 @@ const leftBtnClick = () => {
   }
 };
 const rightBtnClick = () => {
-  const deltaTime = 10;
+  const deltaTime = 17;
   if (state.value === 'reset') {
     // 秒表已复位，点击以启动秒表
     clearInterval(timer.value);  // （保险）清除计时器
@@ -434,6 +434,7 @@ onMounted(() => {
   const grabbingHandler = (event) => {mouseMoveX.value = event.x};
   // 监听鼠标左键按下事件
   dashBox.value.addEventListener('mousedown', (event) => {
+    document.onselectstart = () => false;
     mouseDownX.value = event.x;
     mouseMoveX.value = event.x;
     // 左键按下后，才监听鼠标移动，降低资源消耗
@@ -441,6 +442,7 @@ onMounted(() => {
   });
   // 监听鼠标左键抬起事件
   dashBox.value.addEventListener('mouseup', (event) => {
+    document.onselectstart = () => true;
     dashBox.value.removeEventListener('mousemove', grabbingHandler);
     // 判断表盘位移量是否达到对应表盘切换点，需要切换表盘
     if (currentDash.value === 'digital' && deltaX.value < dashes['digital'].deltaX.switchPnt) {
@@ -481,12 +483,14 @@ onMounted(() => {
   };
   
   switcher.value.addEventListener('mousedown', (event) => {
+    document.onselectstart = () => false;
     switcherMouseX.value = event.x;
     currentDash.value = switcherJudgment.value;
     switcher.value.addEventListener('mousemove', movingHandler);
   });
 
   switcher.value.addEventListener("mouseup", (event) => {
+    document.onselectstart = () => true;
     switcher.value.removeEventListener('mousemove', movingHandler);
     switcherMouseX.value = 0;
   });
@@ -549,6 +553,8 @@ body {
   height: $dash-size;
   position: relative;
   user-select: none;
+  -moz-user-select: none;
+  -webkit-user-select: none;
   overflow: hidden;
 
   @mixin dash-base() {
@@ -711,9 +717,13 @@ body {
     justify-content: space-evenly;
     align-items: center;
     background-color: transparent;
+    user-select: none;
+    -moz-user-select: none;
+    -webkit-user-select: none;
 
     &:hover {
       background-color: #333;
+      cursor: pointer;
     }
 
     div {
