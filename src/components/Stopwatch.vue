@@ -316,6 +316,7 @@ const leftBtnClick = () => {
       formatedTime: localTimeFormated.value,
     };
     localTime.value = 0;  // 置0本计次时间
+    // 更新计次最大/最小值索引
     if (laps.value[maxLapIdx.value].milliSeconds > laps.value[0].milliSeconds) {
       maxLapIdx.value++;
     } else {
@@ -434,6 +435,7 @@ onMounted(() => {
   const grabbingHandler = (event) => {mouseMoveX.value = event.x};
   // 监听鼠标左键按下事件
   dashBox.value.addEventListener('mousedown', (event) => {
+    // 关闭对文本选中事件的监听
     document.onselectstart = () => false;
     mouseDownX.value = event.x;
     mouseMoveX.value = event.x;
@@ -442,6 +444,7 @@ onMounted(() => {
   });
   // 监听鼠标左键抬起事件
   dashBox.value.addEventListener('mouseup', (event) => {
+    // 重启对文本选中事件的监听
     document.onselectstart = () => true;
     dashBox.value.removeEventListener('mousemove', grabbingHandler);
     // 判断表盘位移量是否达到对应表盘切换点，需要切换表盘
@@ -458,15 +461,16 @@ onMounted(() => {
 // +----------------------------------------+
 // |               表盘点击切换               |
 // +----------------------------------------+
-const switchToDigital = () => currentDash.value = 'digital';
-const switchToAnalog = () => currentDash.value = 'analog';
-const isDigitalDash = computed(() => currentDash.value === 'digital');
-const isAnalogDash = computed(() => currentDash.value === 'analog');
-const switcher = ref(null);
-const halfWindowX = ref(window.innerWidth / 2);
-const switcherMouseX = ref(0);
-const switcherJudgment = computed(() => {
+const isDigitalDash = computed(() => currentDash.value === 'digital');  // 圆点状态为数字表盘侧高亮
+const isAnalogDash = computed(() => currentDash.value === 'analog');    // 圆点状态为模拟表盘侧高亮
+const switcher = ref(null);                                             // 获取 switcher 表盘切换 DOM 元素
+const halfWindowX = ref(window.innerWidth / 2);                         // 中线 x 坐标（窗口）
+const switcherMouseX = ref(0);                                          // 鼠标在 switcher 中的 x 坐标（窗口）
+const switcherJudgment = computed(() => {                               // switcher 对表盘做出判断（数字/模拟）
+  // 鼠标 x 坐标为0时，保持原表盘
   if (switcherMouseX.value === 0) return currentDash.value;
+  // 鼠标 x 坐标不为0时，代表左键按下状态
+  // 以中线为界，鼠标在左边为数字表盘，鼠标在右边为模拟表盘
   if (switcherMouseX.value <= halfWindowX.value) {
     return 'digital';
   } else {
@@ -478,20 +482,29 @@ onMounted(() => {
   window.addEventListener("resize", () => halfWindowX.value = window.innerWidth / 2);
   // 鼠标移动事件监听处理函数，单拎出来方便取消监听
   const movingHandler = (event) => {
+    // 先更新鼠标 x 坐标
     switcherMouseX.value = event.x;
+    // 再更新对表盘做出的判断
     currentDash.value = switcherJudgment.value;
   };
   
   switcher.value.addEventListener('mousedown', (event) => {
+    // 关闭对文本选中事件的监听
     document.onselectstart = () => false;
+    // 更新鼠标 x 坐标
     switcherMouseX.value = event.x;
+    // 更新对表盘做出的判断
     currentDash.value = switcherJudgment.value;
+    // 开始对监听鼠标移动事件
     switcher.value.addEventListener('mousemove', movingHandler);
   });
 
   switcher.value.addEventListener("mouseup", (event) => {
+    // 重启对文本选中事件的监听
     document.onselectstart = () => true;
+    // 取消对鼠标移动的监听
     switcher.value.removeEventListener('mousemove', movingHandler);
+    // 置0鼠标 x 坐标，将判断权交回
     switcherMouseX.value = 0;
   });
 });
@@ -551,11 +564,11 @@ body {
 #stopwatch-dashes {
   width: 100%;
   height: $dash-size;
-  position: relative;
-  user-select: none;
+  position: relative;  // 作为子元素容纳块
+  user-select: none;  // 取消文本选中
   -moz-user-select: none;
   -webkit-user-select: none;
-  overflow: hidden;
+  overflow: hidden;  // 只显示一个表盘
 
   @mixin dash-base() {
     padding: 0 math.div($component-top, 2);
@@ -594,6 +607,7 @@ body {
       $y: 0 - $yOffset;
       $unitDegree: math.div(360, $num);
 
+      // 表盘数码排布
       @for $i from 1 to $num + 1 {
         li:nth-child(#{$i}) {
           position: absolute;
@@ -629,8 +643,8 @@ body {
     }
 
     svg {
-      position: relative;
-      z-index: 10;
+      position: relative;  // 使 z-index 生效
+      z-index: 10;  // 使表针比数码、小数字表盘更靠上
     }
   }
 }
@@ -642,10 +656,10 @@ body {
   align-items: center;
   position: relative;
   top: -25px;
-  z-index: 20;
+  z-index: 20;  // 使按钮比模拟表盘更靠上
 
   .round-buttons {
-    background-color: #000;
+    background-color: #000;  // 按钮不透明
     border-radius: 50%;
 
     button {
@@ -717,7 +731,7 @@ body {
     justify-content: space-evenly;
     align-items: center;
     background-color: transparent;
-    user-select: none;
+    user-select: none;  // 取消文本选中
     -moz-user-select: none;
     -webkit-user-select: none;
 
@@ -733,11 +747,11 @@ body {
       width: $diameter;
       border-radius: $diameter;
       background-color: #888;
-      transition: background-color .1s ease-in-out;
+      transition: background-color .1s ease-in-out;  // 从高亮状态慢慢消退
 
       &.highlight {
         background-color: #fff;
-        transition: background-color 0s;
+        transition: background-color 0s;  // 瞬间进入高亮状态
       }
     }
   }
@@ -750,7 +764,7 @@ body {
   $lineColor: #555;
   $offsetY: 70px;
 
-  position: absolute;  // 绝对定位以确保高度响应式变化
+  position: absolute;  // 绝对定位以确保高度能响应式变化
   top: $component-width + $offsetY;
   bottom: 0;
   left: 0;
@@ -774,8 +788,8 @@ body {
       $lineColor calc(#{$lineHeight} - 1px),
       $lineColor $lineHeight
     );
-    background-clip: content-box;
-    background-attachment: local;
+    background-clip: content-box;  // 裁剪掉内容框以外的背景
+    background-attachment: local;  // 背景随本元素内容局部滚动
     
     li {
       display: flex;
@@ -791,7 +805,7 @@ body {
       }
 
       span:first-child {
-        font-variant-numeric: normal;
+        font-variant-numeric: normal;  // 计次索引取消数字等宽对齐
       }
     }
   }
